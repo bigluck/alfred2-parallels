@@ -8,11 +8,13 @@ $reList = '/^\s*'.$reUUID.'\s*(?<status>[^\s]+)\s*(?<ip>[^\s]+)\s*(?<name>.*)$/'
 if (($isUUID = preg_match('/'.$reUUID.'/', $inQuery, $tmpData) ? true : false) === true)
 	$inQuery = $tmpData['uuid'];
 $supportedActions = array(
-	'start' => array('running', 'suspended'),
-	'stop' => array('stopped', 'suspended'),
+	'start' => array('running', 'suspended', 'paused'),
+	'stop' => array('stopped'),
 	'reset' => array('stopped', 'suspended'),
 	'suspend' => array('stopped', 'suspended'),
-	'resume' => array('running', 'stopped'));
+	'resume' => array('running', 'stopped'),
+        'pause' => array('paused', 'suspended', 'stopped')
+    );
 $foundVM = array();
 $results = array();
 
@@ -30,7 +32,7 @@ if ($isUUID)
 	foreach ($supportedActions AS $action => $currentStatus)
 		if (!in_array($foundVM[0]['status'], $currentStatus))
 			$results[] = array(
-				'uid' => $action,
+				'uid' => $foundVM[0]['name'].':'.$action,
 				'arg' => $action.' '.$inQuery,
 				'title' => ucfirst($action),
 				'subtitle' => $foundVM[0]['name'],
@@ -39,7 +41,7 @@ if ($isUUID)
 
 	if ($foundVM[0]['status'] == 'running')
 		$results[] = array(
-			'uid' => 'capture',
+			'uid' => $foundVM[0]['name'].':'.'capture',
 			'arg' => 'capture '.$inQuery.' --file ~/Desktop/'.str_replace(array(' ', '/'), array('-', '-'), $foundVM[0]['name']).'-'.@date('Ymd-his').'.jpg',
 			'title' => 'Capture a screenshot',
 			'subtitle' => $foundVM[0]['name'],
@@ -65,7 +67,7 @@ if ($isUUID)
 // No VM matched
 if (!count($results))
 	$results[] = array(
-		'uid' => 'none',
+		'uid' => '',
 		'arg' => 'none',
 		'title' => 'No VM found!',
 		'subtitle' => 'There aren\'t any VM...',
@@ -88,3 +90,4 @@ foreach($results AS $rows)
 echo $xmlObject->asXML();  
 
 ?>
+
